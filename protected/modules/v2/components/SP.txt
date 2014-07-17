@@ -1,0 +1,21 @@
+1. Union Employees
+
+DELIMITER \\
+DROP PROCEDURE IF EXISTS `sp_GetUnionEmployees` \\
+
+
+CREATE PROCEDURE `sp_GetUnionEmployees`(IN facilities VARCHAR(128))
+BEGIN
+
+SELECT t.*, a.*, b.*, c.*
+FROM `hr_employee` t
+left join `hr_employee_personal` a on a.id = t.`active_personal_id`
+left join `hr_employee_employment` b on b.id = t.`active_employment_id`
+left join `hr_employee_payroll` c on c.id = t.`active_payroll_id`
+where find_in_set(b.facility_id, facilities)
+and b.has_union = '1'
+order by t.last_name asc;
+
+END \\
+
+

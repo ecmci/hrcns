@@ -1,0 +1,96 @@
+<?php
+$data = array(
+      array('id'=>'1', 'facility'=>'Gardena', 'title'=>'Gloves', 'status'=>'N', 'alert'=>'0' ,'since'=>'Today'),
+      array('id'=>'2', 'facility'=>'Kit Carson', 'title'=>'Boxing Ring', 'status'=>'N', 'alert'=>'1' ,'since'=>'5 Days Ago'),
+      array('id'=>'3', 'facility'=>'Southgate', 'title'=>'Audience', 'status'=>'N', 'alert'=>'1' ,'since'=>'15 Days Ago'),
+      array('id'=>'1', 'facility'=>'Gardena', 'title'=>'Gloves', 'status'=>'N', 'alert'=>'0' ,'since'=>'Today'),
+      array('id'=>'2', 'facility'=>'Kit Carson', 'title'=>'Boxing Ring', 'status'=>'N', 'alert'=>'1' ,'since'=>'5 Days Ago'),
+      array('id'=>'3', 'facility'=>'Southgate', 'title'=>'Audience', 'status'=>'N', 'alert'=>'1' ,'since'=>'15 Days Ago'),
+      array('id'=>'1', 'facility'=>'Gardena', 'title'=>'Gloves', 'status'=>'N', 'alert'=>'0' ,'since'=>'Today'),
+      array('id'=>'2', 'facility'=>'Kit Carson', 'title'=>'Boxing Ring', 'status'=>'N', 'alert'=>'1' ,'since'=>'5 Days Ago'),
+      array('id'=>'3', 'facility'=>'Southgate', 'title'=>'Audience', 'status'=>'N', 'alert'=>'1' ,'since'=>'15 Days Ago'),
+      array('id'=>'1', 'facility'=>'Gardena', 'title'=>'Gloves', 'status'=>'N', 'alert'=>'0' ,'since'=>'Today'),
+      array('id'=>'2', 'facility'=>'Kit Carson', 'title'=>'Boxing Ring', 'status'=>'N', 'alert'=>'1' ,'since'=>'5 Days Ago'),
+      array('id'=>'3', 'facility'=>'Southgate', 'title'=>'Audience', 'status'=>'N', 'alert'=>'1' ,'since'=>'15 Days Ago'),
+      array('id'=>'1', 'facility'=>'Gardena', 'title'=>'Gloves', 'status'=>'N', 'alert'=>'0' ,'since'=>'Today'),
+      array('id'=>'2', 'facility'=>'Kit Carson', 'title'=>'Boxing Ring', 'status'=>'N', 'alert'=>'1' ,'since'=>'5 Days Ago'),
+      array('id'=>'3', 'facility'=>'Southgate', 'title'=>'Audience', 'status'=>'N', 'alert'=>'1' ,'since'=>'15 Days Ago'),
+      array('id'=>'1', 'facility'=>'Gardena', 'title'=>'Gloves', 'status'=>'N', 'alert'=>'0' ,'since'=>'Today'),
+      array('id'=>'2', 'facility'=>'Kit Carson', 'title'=>'Boxing Ring', 'status'=>'N', 'alert'=>'1' ,'since'=>'5 Days Ago'),
+      array('id'=>'3', 'facility'=>'Southgate', 'title'=>'Audience', 'status'=>'N', 'alert'=>'1' ,'since'=>'15 Days Ago'),
+      array('id'=>'1', 'facility'=>'Gardena', 'title'=>'Gloves', 'status'=>'N', 'alert'=>'0' ,'since'=>'Today'),
+      array('id'=>'2', 'facility'=>'Kit Carson', 'title'=>'Boxing Ring', 'status'=>'N', 'alert'=>'1' ,'since'=>'5 Days Ago'),
+      array('id'=>'3', 'facility'=>'Southgate', 'title'=>'Audience', 'status'=>'N', 'alert'=>'1' ,'since'=>'15 Days Ago'),
+      array('id'=>'1', 'facility'=>'Gardena', 'title'=>'Gloves', 'status'=>'N', 'alert'=>'0' ,'since'=>'Today'),
+      array('id'=>'2', 'facility'=>'Kit Carson', 'title'=>'Boxing Ring', 'status'=>'N', 'alert'=>'1' ,'since'=>'5 Days Ago'),
+      array('id'=>'3', 'facility'=>'Southgate', 'title'=>'Audience', 'status'=>'N', 'alert'=>'1' ,'since'=>'15 Days Ago'),
+  );
+  
+$gridDataProvider = new CArrayDataProvider($data);
+?>
+<div class="row-fluid">
+ <div class="span2">
+  <fieldset><legend>Notifications</legend>
+  <div class="alert">
+    <button type="button" class="close" data-dismiss="alert">&times;</button>
+    <strong>22</strong> Purchase Requests Needs your Approval
+  </div>
+  <div class="alert">
+    <button type="button" class="close" data-dismiss="alert">&times;</button>
+    <strong>8</strong> Change Notice Requests Needs your Approval
+  </div>
+  </fieldset>     
+ </div>
+  <div class="span4">
+  <fieldset><legend>Purchase Approval</legend>
+  <?php $this->renderPartial('_search_purchase_quick'); ?>
+  <?php $this->widget('bootstrap.widgets.TbGridView', array(
+      'type'=>'condensed',
+      'dataProvider'=>$gridDataProvider,
+      'template'=>"{items}",
+      'rowCssClassExpression'=>'$data["alert"] == "1" ? "alert alert-error" : "ok"',
+      'htmlOptions'=>array('style'=>'cursor:pointer;'),      
+      'columns'=>array(
+          array('name'=>'id', 'header'=>'ID'),
+          array('name'=>'facility', 'header'=>'Facility'),
+          array('name'=>'title', 'header'=>'Title'),
+          array('name'=>'status', 'header'=>'Status'),
+          array('name'=>'since', 'header'=>'Received'),
+      ),
+  )); ?>
+  </fieldset>     
+ </div>
+ <div class="span4">
+ <fieldset><legend>Change Notice Approval</legend>
+ <?php $this->renderPartial('_search_cnotice_quick'); ?>
+  <?php $this->widget('bootstrap.widgets.TbGridView', array(
+      'type'=>'condensed',
+      'dataProvider'=>$gridDataProvider,
+      'template'=>"{items}",
+      'rowCssClassExpression'=>'$data["alert"] == "1" ? "alert alert-error" : "ok"',
+      'htmlOptions'=>array('style'=>'cursor:pointer;'),      
+      'columns'=>array(
+          array('name'=>'id', 'header'=>'ID'),
+          array('name'=>'facility', 'header'=>'Facility'),
+          array('name'=>'title', 'header'=>'Title'),
+          array('name'=>'status', 'header'=>'Status'),
+          array('name'=>'since', 'header'=>'Received'),
+      ),
+  )); ?>
+  </fieldset> 
+ </div> 
+ <div class="span2"> 
+    <fieldset><legend>Forms</legend>
+      <?php $this->widget('bootstrap.widgets.TbMenu', array(
+          'type'=>'list',
+          'items'=>array(
+              array('label'=>'REQUISITION'),
+              array('label'=>'New Purchase Request Form', 'icon'=>'plus', 'url'=>'#'),
+              array('label'=>'New Service Request Form', 'icon'=>'plus', 'url'=>'#'),              
+              array('label'=>'CHANGE NOTICE'),
+              array('label'=>'New Change Notice Request Form', 'icon'=>'plus', 'url'=>'#'),
+          ),
+      )); ?> 
+    </fieldset>
+  </div>
+</div>

@@ -1,0 +1,8 @@
+<?php
+ class ItSysNoticePoolerCommand extends CConsoleCommand{
+  public function run($args){
+    Yii::import('application.modules.itsystems.components.ItSysCron');
+    ItSysCron::noticeRequestPoolerCron();  
+  }
+ }
+?>
