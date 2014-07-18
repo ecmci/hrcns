@@ -157,26 +157,26 @@ disableInputs();
 Yii::app()->clientScript->registerScript('master-fxnlib-js',"
 function disableInputs(){
 $('#tar-form input, #tar-form select, #tar-form textarea').each(function(){
-  $(this).attr('readonly','readonly');
-  $(this).attr('disabled','disabled');
-});
-$('.datepicker').datepicker('destroy');
+    $(this).attr('readonly','readonly');
+    $(this).attr('disabled','disabled');
+  });
+  $('.datepicker').datepicker('destroy');
 }
 function enableInputs(){
-$('#tar-form input, #tar-form select, #tar-form textarea').each(function(){
-  $(this).removeAttr('readonly');
-  $(this).removeAttr('disabled');
-});
-renderDatepickers();
+  $('#tar-form input, #tar-form select, #tar-form textarea').each(function(){
+    $(this).removeAttr('readonly');
+    $(this).removeAttr('disabled');
+  });
+  renderDatepickers();
 }
 function renderDatepickers(){
-$('.datepicker').each(function(){
-  $(this).datepicker({
-    changeYear : true,
-    changeMonth : true
+  $('.datepicker').each(function(){
+    $(this).datepicker({
+      changeYear : true,
+      changeMonth : true
+    });
+    $(this).attr('readonly','readonly');
   });
-  $(this).attr('readonly','readonly');
-});
 }
 ",CClientScript::POS_HEAD);
 ?>

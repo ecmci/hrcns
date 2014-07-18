@@ -6,6 +6,7 @@
     </div>
     <ul class="nav nav-list">
       <li class="nav-header">TAR</li>
+      <li></li>
       <li><a id="btnNew" href="#"><span class="icon-plus"></span> New TAR Log</a></li>
       <li><a href="<?php echo Yii::app()->createUrl('tar/home/report'); ?>"><span class="icon-briefcase"></span> Reports</a></li>
       <li class="nav-header">External Sites</li>

@@ -4,7 +4,7 @@ class HomeController extends Controller
 {
 	public function actionIndex()
 	{
-		$this->render('master');
+		$this->render('home');
 	}
   
   public function actionReport(){
