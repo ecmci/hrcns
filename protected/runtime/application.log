@@ -11759,3 +11759,6 @@ REQUEST_URI=/hrcns/index.php/tar
 2014/07/22 21:40:40 [error] [app] Visitor from 192.168.1.48
 2014/07/22 21:40:50 [error] [app] Visitor from 192.168.1.48
 2014/07/22 21:40:50 [error] [app] LOGIN: steven.l@evacare.com logged in successfully from 192.168.1.48
+2014/07/23 13:07:35 [error] [app] Visitor from 192.168.1.48
+2014/07/23 13:07:39 [error] [app] Visitor from 192.168.1.48
+2014/07/23 13:07:39 [error] [app] LOGIN: steven.l@evacare.com logged in successfully from 192.168.1.48
