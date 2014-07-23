@@ -1,3 +1,5 @@
+
+
 #tar-form-preloader img{
   display:block;
   margin-left: auto;
@@ -5,8 +7,8 @@
 }
 
 label{
-  font-size:0.85em;
-  font-weight:bold;
+  font-size:0.75em !important;
+  font-weight:bold !important;
 }
 
 .table{
@@ -35,6 +37,10 @@ span.good{
   border-radius: 4px;
   -webkit-box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
   box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+}
+
+.controls span.error{
+  font-size:0.75em !important;
 }
 
 .panel-heading {

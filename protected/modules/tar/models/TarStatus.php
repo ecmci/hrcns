@@ -13,6 +13,13 @@
 class TarStatus extends CActiveRecord
 {
 	/**
+	 * Get status list
+	 */     
+  public static function getList(){
+    return CHtml::listData(self::model()->findAll(),'id','name');
+  } 
+  
+  /**
 	 * Returns the static model of the specified AR class.
 	 * @param string $className active record class name.
 	 * @return TarStatus the static model class

@@ -1,25 +1,38 @@
 <?php
 
 /**
- * This is the model class for table "tar_approved_care".
+ * This is the model class for table "tar_alerts_tpl".
  *
- * The followings are the available columns in table 'tar_approved_care':
+ * The followings are the available columns in table 'tar_alerts_tpl':
  * @property integer $id
  * @property string $name
+ * @property string $data_struct
  *
  * The followings are the available model relations:
- * @property TarLog[] $tarLogs
+ * @property TarAlerts[] $tarAlerts
  */
-class TarApprovedCare extends CActiveRecord
+class TarAlertsTemplate extends CActiveRecord
 {
-	public static function getList(){
-    return CHtml::listData(self::model()->findAll(),'id','name');
+	/**
+	 * Override parent and do extra stuff
+	 */
+  protected function afterFind(){
+    $this->data_struct = CJSON::decode($this->data_struct);
+    return parent::afterFind();
   }
+  
+  /**
+	 * Override parent and do extra stuff
+	 */
+  protected function beforeSave(){
+    $this->data_struct = CJSON::encode($this->data_struct);
+    return parent::beforeSave();
+  }     
   
   /**
 	 * Returns the static model of the specified AR class.
 	 * @param string $className active record class name.
-	 * @return TarApprovedCare the static model class
+	 * @return TarAlertsTpl the static model class
 	 */
 	public static function model($className=__CLASS__)
 	{
@@ -31,7 +44,7 @@ class TarApprovedCare extends CActiveRecord
 	 */
 	public function tableName()
 	{
-		return 'tar_approved_care';
+		return 'tar_alerts_tpl';
 	}
 
 	/**
@@ -42,10 +55,11 @@ class TarApprovedCare extends CActiveRecord
 		// NOTE: you should only define rules for those attributes that
 		// will receive user inputs.
 		return array(
+			array('name, data_struct', 'required'),
 			array('name', 'length', 'max'=>45),
 			// The following rule is used by search().
 			// Please remove those attributes that should not be searched.
-			array('id, name', 'safe', 'on'=>'search'),
+			array('id, name, data_struct', 'safe', 'on'=>'search'),
 		);
 	}
 
@@ -57,7 +71,7 @@ class TarApprovedCare extends CActiveRecord
 		// NOTE: you may need to adjust the relation name and the related
 		// class name for the relations automatically generated below.
 		return array(
-			'tarLogs' => array(self::HAS_MANY, 'TarLog', 'approved_care_id'),
+			'tarAlerts' => array(self::HAS_MANY, 'TarAlerts', 'alerts_tpl_id'),
 		);
 	}
 
@@ -69,6 +83,7 @@ class TarApprovedCare extends CActiveRecord
 		return array(
 			'id' => 'ID',
 			'name' => 'Name',
+			'data_struct' => 'Data Struct',
 		);
 	}
 
@@ -85,6 +100,7 @@ class TarApprovedCare extends CActiveRecord
 
 		$criteria->compare('id',$this->id);
 		$criteria->compare('name',$this->name,true);
+		$criteria->compare('data_struct',$this->data_struct,true);
 
 		return new CActiveDataProvider($this, array(
 			'criteria'=>$criteria,

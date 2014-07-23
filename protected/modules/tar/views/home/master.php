@@ -18,7 +18,7 @@
     <div class="row-fluid" id="tar-form-section">
       <div class="span12">
           <?php
-           include '_master_tar_form.php';
+           //include '_master_tar_form.php';
           ?> 
       </div>  
     </div>

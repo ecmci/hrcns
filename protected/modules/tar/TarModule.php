@@ -11,6 +11,7 @@ class TarModule extends CWebModule
 		$this->setImport(array(
 			'tar.models.*',
 			'tar.components.*',
+      'application.models.Facility',
 		));
 	}
 
