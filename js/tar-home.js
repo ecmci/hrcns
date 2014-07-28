@@ -1,9 +1,10 @@
 function onPageLoad(){
-  bindHomeControls();
+  $('div#tar-form').hide();
+  bindTarFormControls();
   renderDatepickers();
 }
 
-function bindHomeControls(){
+function bindTarFormControls(){
   $('#btnSave').on('click',function(){
     switch(form_ops){
       case 'new':
@@ -24,7 +25,14 @@ function bindHomeControls(){
 }
 
 function loadTarLog(id){
-  alert(id);  
+  showPageLoader();
+  $('div#home_tar_form').load(rest_url + '?id='+id+'&html=1',function(){
+    hidePageLoader();
+    hideTarList();
+    disableTarForm();
+    showTarForm();
+    bindTarFormControls();
+  });     
 }
 
 function submitTarLog(){  
@@ -59,6 +67,22 @@ function submitTarLog(){
   });
 }
 
+function showTarList(){
+  $('div#home_tar_list').show();
+}
+
+function hideTarList(){
+  $('div#home_tar_list').hide();
+}
+
+function showTarForm(){
+  $('div#tar-form').show();
+}
+
+function hideTarForm(){
+  $('div#tar-form').hide();
+}
+
 function resetTarForm(){
   $(':input','#tar-log-form')
   .not(':button, :submit, :reset, :hidden')
@@ -66,6 +90,10 @@ function resetTarForm(){
   .removeAttr('checked')
   .removeAttr('selected');
   $('#proc-alert-activity-panel').html('');
+}
+
+function disableTarForm(){
+  $('form#tar-log-form input, form#tar-log-form select, form#tar-log-form textarea').attr('disabled','disabled');
 }
 
 function viewMode(){

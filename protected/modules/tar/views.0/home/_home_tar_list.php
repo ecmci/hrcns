@@ -1,7 +1,7 @@
 <?php
 $model = new TarLog; 
 ?>
-<div class="panel">
+<div class="panel" id="tar-list">
 <!--   <div class="panel-heading">Treatment Authorization Requests <span class="label">16 Open Cases</span></div> -->
   <div class="panel-heading">
     <div class="row-fluid">
@@ -21,7 +21,7 @@ $model = new TarLog;
       <div class="span12">
         <table class="table table-condensed table-hover table-striped" id="tbl-active-tar">
           <thead>
-        	  <tr> <!--Header double-click sort list/records-->
+        	  <tr> 
         		 <th>Case #</th>
         		 <th>Resident</th>
         		 <th>Control #</th>
@@ -33,22 +33,22 @@ $model = new TarLog;
         	</thead>
           <tbody>
             <?php foreach($model->search()->getData() as $d): ?>
-            <tr> <!--Header double-click sort list/records-->
+            <tr>
               <td><?php echo $d['case_id']; ?></td>
               <td><?php echo $d['resident']; ?></td>
               <td><?php echo $d['control_num']; ?></td>
               <td><?php echo TarStatus::model()->findByPk($d['status_id'])->name; ?></td>
               <td><?php echo $d['age_in_days']; ?></td>
               <td><?php echo $d['requested_dos_date_from']; ?></td>
-              <td><a href="#" class="btn" title="View" alt="View"><span class="icon-eye-open"></span></a></td>
+              <td><a href="#" onclick="loadTarLog(<?php echo $d['case_id']; ?>);" class="btn" title="View" alt="View"><span class="icon-eye-open"></span></a></td>
             </tr>
             <?php endforeach; ?>
           </tbody>
         </table>
         <?php /* $this->widget('bootstrap.widgets.TbGridView', array(
             'id'=>'tar-log-grid',
-            'ajaxUrl'=>array('/tar/log'),
-            'ajaxVar'=>'tar-home-yiilist',
+            //'ajaxUrl'=>array('/tar/log'),
+            //'ajaxVar'=>'ajax-tar-list',
             'dataProvider'=>$model->search(),
             'filter'=>$model,
             'selectionChanged'=>'function(id){ loadTarLog($.fn.yiiGridView.getSelection(id));}',
@@ -71,7 +71,7 @@ $model = new TarLog;
                   'filter'=>false,
                 ),
             ),
-        )); */?>
+        )); */ ?>
       </div>
     </div>
   </div>

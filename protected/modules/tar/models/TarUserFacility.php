@@ -14,7 +14,9 @@
  */
 class TarUserFacility extends CActiveRecord
 {
-	/**
+	
+  
+  /**
 	 * Returns the static model of the specified AR class.
 	 * @param string $className active record class name.
 	 * @return TarUserFacility the static model class

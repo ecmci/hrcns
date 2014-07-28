@@ -15,7 +15,27 @@
  */
 class TarActivityTrail extends CActiveRecord
 {
-	/**
+	
+  /**
+	 * Override parent after find
+	 */
+  protected function afterFind(){
+    $this->timestamp = date('m/d/Y h:i A',strtotime($this->timestamp));
+    return parent::afterFind();
+  }
+  
+  /**
+	 * Logger Interface
+	 */
+  public static function log($action,$message='',$case_id){
+    $model = new self;
+    $model->action = $action;
+    $model->message = $message;
+    $model->log_case_id = $case_id;
+    $model->save(false);
+  }     
+  
+  /**
 	 * Returns the static model of the specified AR class.
 	 * @param string $className active record class name.
 	 * @return TarActivityTrail the static model class
@@ -95,6 +115,26 @@ class TarActivityTrail extends CActiveRecord
 
 		return new CActiveDataProvider($this, array(
 			'criteria'=>$criteria,
+		));
+	}
+  
+  public function getActivity()
+	{
+		// Warning: Please modify the following code to remove attributes that
+		// should not be searched.
+
+		$criteria=new CDbCriteria;
+
+		$criteria->compare('action',$this->action,true);
+		$criteria->compare('message',$this->message,true);
+		$criteria->compare('timestamp',$this->timestamp,true);
+		$criteria->compare('log_case_id',$this->log_case_id);
+    
+    $criteria->order = 'timestamp desc';
+
+		return new CActiveDataProvider($this, array(
+			'criteria'=>$criteria,
+      'pagination'=>false,
 		));
 	}
 }

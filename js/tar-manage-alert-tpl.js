@@ -5,9 +5,7 @@
  * Last Updated By: Steven   
  **********/
 
-/* vars */ 
-var counter_alert = 1;
-   
+  
 /* functions */
 function addAlert(){
   var tpl = "<tr>"+

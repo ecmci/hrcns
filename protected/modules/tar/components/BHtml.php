@@ -1,5 +1,17 @@
 <?php
 class BHtml{
+  public static function checkBox($model,$attribute,$options=array(),$form){
+    $tpl = '<div class="control-group">';
+    
+      $tpl .= '<div class="controls">'; 
+        $tpl .= $form->checkBox($model,$attribute,$options);
+        $tpl .= $form->labelEx($model,$attribute,array('class'=>'control-label checkbox','style'=>'display:inline;'));
+        $tpl .= $form->error($model,$attribute);  
+      $tpl .= '</div>';
+    $tpl .= '</div>';    
+    return $tpl;
+  }
+  
   public static function dropDownList($model,$attribute,$data,$options=array(),$form){
     $tpl = '<div class="control-group">';
     $tpl .= $form->labelEx($model,$attribute,array('class'=>'control-label'));

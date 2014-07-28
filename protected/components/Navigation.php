@@ -2,8 +2,8 @@
 class Navigation{
   public static function getMenuItems(){
     return array(
-        array('label'=>"Notice <span class='badge badge-important'>6</span>",'url'=>array('/v2'),'visible'=>!Yii::app()->user->isGuest),
-        array('label'=>"TAR <span class='badge badge-important'>16</span>",'url'=>array('/tar'),'visible'=>!Yii::app()->user->isGuest),
+        array('label'=>"Notice",'url'=>array('/v2'),'visible'=>!Yii::app()->user->isGuest),
+        array('label'=>"TAR",'url'=>array('/tar'),'visible'=>!Yii::app()->user->isGuest),
         array('label'=>"Hello, ".Yii::app()->user->getState('user').' ('.Helper::printEnumValue(Yii::app()->user->getState('hr_group')).')','url'=>array('#'),'itemOptions'=>array('class'=>'dropdown'),'linkOptions'=>array('id'=>'user-module','class'=>'dropdown-toggle','data-toggle'=>"dropdown"),
           'items'=>array( 
               //array('label'=>'Help','url'=>array('/site/help')),

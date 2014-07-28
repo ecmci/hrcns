@@ -14,7 +14,7 @@
   <?php echo $form->dropDownListRow($model,'user_id',User::getList(),array('empty'=>'-select-','class'=>'span5','disabled'=>$disabled)); ?>
 
 	<?php echo $form->dropDownListRow($model,'group',ZHtml::enumItem($model,'group'),array('class'=>'span5')); ?>
-
+  
   <?php echo $form->dropDownListRow($model, 'facility_handled_ids', Facility::getFullList() , array('hint'=>'Tip: Hold CTRL and select multiple items. You can also click one and drag up/down.','multiple'=>true,'style'=>'height:200px;')); ?>
 
   <?php echo $form->checkBoxRow($model,'can_override_routing',array('hint'=>'(Check if this user can override the workflow routing or status.)')); ?>

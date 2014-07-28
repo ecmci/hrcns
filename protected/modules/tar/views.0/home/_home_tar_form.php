@@ -1,12 +1,11 @@
-<input id="loaded_tar_id" type="hidden">
-<div class="panel">
+<div class="panel" id="tar-form">
   <div class="panel-heading">
     <div class="row-fluid"><!-- Form Operations -->
       <div class="span4"><span id="operation">View</span> TAR Case # <span id="tar-case-id"><?php echo $model->case_id; ?></span></div>
       <div class="span8">
         <div class="pull-right">
           <div id="update-buttons">
-            <button id="btnNewToo" type="button" class="btn btn-success btn-mini"><span class="icon-plus"></span> New</button>            
+<!--             <button id="btnNewToo" type="button" class="btn btn-success btn-mini"><span class="icon-plus"></span> New</button> -->            
             <button id="btnCopyNew" type="button" class="btn btn-success btn-mini"><span class="icon-book"></span> Copy as New</button>
             <button id="btnUpdate" type="button" class="btn btn-warning btn-mini"><span class="icon-edit"></span> Edit</button>
             <a href="#modal-close-case" role="button" class="btn btn-danger btn-mini" data-toggle="modal"><span class="icon-stop"></span> Close</a>
@@ -23,7 +22,7 @@
   </div>
   <div class="panel-body" id="tar-form">
   <?php
-   $this->renderPartial('_tar_form',array('model'=>$model)); 
+   $this->renderPartial('/home/_tar_form',array('model'=>$model)); 
   ?>
   </div>
 </div>

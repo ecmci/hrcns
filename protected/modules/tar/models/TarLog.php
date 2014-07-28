@@ -39,22 +39,23 @@
  */
 class TarLog extends CActiveRecord
 {
-	public $age_in_days, $last_activity;
+	public $age_in_days, $last_activity, $data_struct_checklists, $data_struct_alerts, $reason_for_closing, $message, $send_email, $send_email_to;
   private $DB_DATE_FORMAT = 'Y-m-d';
   private $HUMAN_DATE_FORMAT = 'm/d/Y';
+  public static $STATUS_APPROVED = '5';
   
   /**
    * Override parent: Do stuff after find
    */
   public function afterFind(){
     //human format date fields
-    $this->admit_date = strtotime($this->admit_date) ? date($this->HUMAN_DATE_FORMAT,strtotime($this->admit_date)) : new CDbExpression('NULL');
-    $this->requested_dos_date_from = strtotime($this->requested_dos_date_from) ? date($this->HUMAN_DATE_FORMAT,strtotime($this->requested_dos_date_from)) : new CDbExpression('NULL');
-    $this->requested_dos_date_thru = strtotime($this->requested_dos_date_thru) ? date($this->HUMAN_DATE_FORMAT,strtotime($this->requested_dos_date_thru)) : new CDbExpression('NULL');
-    $this->denied_deferred_date = strtotime($this->denied_deferred_date) ? date($this->HUMAN_DATE_FORMAT,strtotime($this->denied_deferred_date)) : new CDbExpression('NULL');
-    $this->approved_modified_date = strtotime($this->approved_modified_date) ? date($this->HUMAN_DATE_FORMAT,strtotime($this->approved_modified_date)) : new CDbExpression('NULL');
-    $this->backbill_date = strtotime($this->backbill_date) ? date($this->HUMAN_DATE_FORMAT,strtotime($this->backbill_date)) : new CDbExpression('NULL');
-    $this->applied_date = strtotime($this->applied_date) ? date($this->HUMAN_DATE_FORMAT,strtotime($this->applied_date)) : new CDbExpression('NULL');
+    $this->admit_date = strtotime($this->admit_date) ? date($this->HUMAN_DATE_FORMAT,strtotime($this->admit_date)) : '';
+    $this->requested_dos_date_from = strtotime($this->requested_dos_date_from) ? date($this->HUMAN_DATE_FORMAT,strtotime($this->requested_dos_date_from)) : '';
+    $this->requested_dos_date_thru = strtotime($this->requested_dos_date_thru) ? date($this->HUMAN_DATE_FORMAT,strtotime($this->requested_dos_date_thru)) : '';
+    $this->denied_deferred_date = strtotime($this->denied_deferred_date) ? date($this->HUMAN_DATE_FORMAT,strtotime($this->denied_deferred_date)) : '';
+    $this->approved_modified_date = strtotime($this->approved_modified_date) ? date($this->HUMAN_DATE_FORMAT,strtotime($this->approved_modified_date)) : '';
+    $this->backbill_date = strtotime($this->backbill_date) ? date($this->HUMAN_DATE_FORMAT,strtotime($this->backbill_date)) : '';
+    $this->applied_date = strtotime($this->applied_date) ? date($this->HUMAN_DATE_FORMAT,strtotime($this->applied_date)) : '';
 
     //calc age
     $requested = new DateTime(date('Y-m-d',strtotime($this->requested_dos_date_from)));
@@ -71,7 +72,7 @@ class TarLog extends CActiveRecord
    */
   protected function beforeSave(){
     // set fks and others
-    $this->created_by_user_id = '1';
+    $this->created_by_user_id = Yii::app()->user->getState('id');
 
     //db format date fields
     $this->admit_date = strtotime($this->admit_date) ? date($this->DB_DATE_FORMAT,strtotime($this->admit_date)) : new CDbExpression('NULL');
@@ -94,6 +95,11 @@ class TarLog extends CActiveRecord
     if($this->isNewRecord){
       $this->setDefaultProcedures();
       $this->setDefaultAlerts();
+    }elseif($this->scenario == 'update'){
+      $this->updateChecklist();
+      $this->updateAlerts();
+    }else{
+    
     }
     
     //set default alerts
@@ -101,10 +107,65 @@ class TarLog extends CActiveRecord
     return parent::afterSave();
   }
   
+  /***********************
+   * Custom Methods 
+   ***********************/
+   
+   /**
+    * Send follow up
+    */       
+  public function followUp(){
+    $message = new TarMessaging;
+    $message->from_user_id = Yii::app()->user->getState('id');
+    $message->to_user_id = $this->created_by_user_id;
+    $message->message = $this->message;
+    $message->save(false);
+    
+    if($this->send_email == '1'){
+      Helper::queueMail($this->send_email_to,'TAR Follow Up | Case #'.$this->case_id,$this->message);
+    } 
+  }
+   
+   /*
+    * Close case
+    */
+  public function close(){
+    $this->is_closed = '1';
+    return $this;
+  }     
+    
+  
+  
+  /**
+   * Updates the checklist
+   */
+  private function updateAlerts(){
+    $alerts = TarAlerts::model()->find("log_case_id = $this->case_id");
+    $alerts->data = CJSON::encode($this->data_struct_alerts);
+    if($alerts->save(false)){
+      //Yii::log('Saved!','error','app');
+    }else{
+      //Yii::log('Not Saved!','error','app');
+    }
+  }
+  
+  /**
+   * Updates the checklist
+   */
+  private function updateChecklist(){
+    $checklist = TarProcedureChecklist::model()->find("log_case_id = $this->case_id");
+    $checklist->data = CJSON::encode($this->data_struct_checklists);
+    if($checklist->save(false)){
+      //Yii::log('Saved!','error','app');
+    }else{
+      //Yii::log('Not Saved!','error','app');
+    } 
+  }        
+  
   /**
    * Setup default alerts
    */
-  public function setDefaultAlerts(){
+  private function setDefaultAlerts(){
     $ds_tpl = TarAlertsTemplate::model()->find("name='Default'");
     $dstruct_tpl = empty($ds_tpl) ? array() : $ds_tpl->data_struct;
     $alerts = new TarAlerts;
@@ -139,7 +200,9 @@ class TarLog extends CActiveRecord
     $procedure->procedure_checklist_tpl_id = $data_struct_tpl->id;
     $procedure->log_case_id = $this->case_id;
     $procedure->save(false); 
-  }           
+  } 
+  
+            
   
   /**
 	 * Returns the static model of the specified AR class.
@@ -167,16 +230,29 @@ class TarLog extends CActiveRecord
 		// NOTE: you should only define rules for those attributes that
 		// will receive user inputs.
 		return array(
-			array('resident, requested_dos_date_from, status_id, facility_id', 'required'),
+			array('resident, requested_dos_date_from, status_id, facility_id', 'required','on'=>'insert'),
+      array('reason_for_closing','required','on'=>'close'),
+      array('message','required','on'=>'followup'),
+      array('send_email_to','email','on'=>'followup'),
+      array('send_email_to','validateEmailTo','on'=>'followup'),
 			array('is_closed, approved_care_id, status_id, created_by_user_id, facility_id', 'numerical', 'integerOnly'=>true),
 			array('aging_amount', 'numerical'),
 			array('control_num, resident, medical_num, dx_code, type, reason_for_closing, resident_status', 'length', 'max'=>45),
-      array('control_num, resident, medical_num, dx_code, admit_date, type, requested_dos_date_from, requested_dos_date_thru, applied_date, denied_deferred_date, approved_modified_date, backbill_date, aging_amount, notes, is_closed, reason_for_closing, approved_care_id, status_id, created_by_user_id, facility_id, resident_status', 'safe'),
+      array('control_num, resident, medical_num, dx_code, admit_date, type, requested_dos_date_from, requested_dos_date_thru, applied_date, denied_deferred_date, approved_modified_date, backbill_date, aging_amount, notes, is_closed, reason_for_closing, approved_care_id, status_id, created_by_user_id, facility_id, resident_status, data_struct_checklists, data_struct_alerts, reason_for_closing, message, send_email, send_email_to', 'safe'),
 			// The following rule is used by search().
 			// Please remove those attributes that should not be searched.
 			array('case_id, control_num, resident, medical_num, dx_code, admit_date, type, requested_dos_date_from, requested_dos_date_thru, applied_date, denied_deferred_date, approved_modified_date, backbill_date, aging_amount, notes, is_closed, reason_for_closing, created_timestamp, approved_care_id, status_id, created_by_user_id, facility_id, resident_status', 'safe', 'on'=>'search'),
 		);
 	}
+  
+  /**
+   * Custom validation
+   */
+  public function validateEmailTo(){
+    if($this->send_email=='1' and empty($this->send_email_to)){
+      $this->addError('send_email_to','Send Email To is required.');
+    }
+  }      
 
 	/**
 	 * @return array relational rules.
@@ -187,12 +263,12 @@ class TarLog extends CActiveRecord
 		// class name for the relations automatically generated below.
 		return array(
 			'tarActivityTrails' => array(self::HAS_MANY, 'TarActivityTrail', 'log_case_id'),
-			'tarAlerts' => array(self::HAS_MANY, 'TarAlerts', 'log_case_id'),
+			'alerts' => array(self::HAS_ONE, 'TarAlerts', 'log_case_id'),
 			'approvedCare' => array(self::BELONGS_TO, 'TarApprovedCare', 'approved_care_id'),
 			'status' => array(self::BELONGS_TO, 'TarStatus', 'status_id'),
 			'createdByUser' => array(self::BELONGS_TO, 'TarUser', 'created_by_user_id'),
 			'facility' => array(self::BELONGS_TO, 'Facility', 'facility_id'),
-			'tarProcedureChecklists' => array(self::HAS_MANY, 'TarProcedureChecklist', 'log_case_id'),
+			'procedures' => array(self::HAS_ONE, 'TarProcedureChecklist', 'log_case_id'),
 		);
 	}
 
@@ -232,7 +308,7 @@ class TarLog extends CActiveRecord
 	 * Retrieves a list of models based on the current search/filter conditions.
 	 * @return CActiveDataProvider the data provider that can return the models based on the search/filter conditions.
 	 */
-	public function search()
+	public function getActiveCases()
 	{
 		// Warning: Please modify the following code to remove attributes that
 		// should not be searched.
@@ -242,30 +318,14 @@ class TarLog extends CActiveRecord
 		$criteria->compare('case_id',$this->case_id);
 		$criteria->compare('control_num',$this->control_num,true);
 		$criteria->compare('resident',$this->resident,true);
-		$criteria->compare('medical_num',$this->medical_num,true);
-		$criteria->compare('dx_code',$this->dx_code,true);
-		$criteria->compare('admit_date',$this->admit_date,true);
-		$criteria->compare('type',$this->type,true);
 		$criteria->compare('requested_dos_date_from',$this->requested_dos_date_from,true);
 		$criteria->compare('requested_dos_date_thru',$this->requested_dos_date_thru,true);
-		$criteria->compare('applied_date',$this->applied_date,true);
-		$criteria->compare('denied_deferred_date',$this->denied_deferred_date,true);
-		$criteria->compare('approved_modified_date',$this->approved_modified_date,true);
-		$criteria->compare('backbill_date',$this->backbill_date,true);
-		$criteria->compare('aging_amount',$this->aging_amount);
-		$criteria->compare('notes',$this->notes,true);
-		$criteria->compare('is_closed',$this->is_closed);
-		$criteria->compare('reason_for_closing',$this->reason_for_closing,true);
-		$criteria->compare('created_timestamp',$this->created_timestamp,true);
-		$criteria->compare('approved_care_id',$this->approved_care_id);
-		$criteria->compare('status_id',$this->status_id);
-		$criteria->compare('created_by_user_id',$this->created_by_user_id);
-		$criteria->compare('facility_id',$this->facility_id);
-		$criteria->compare('resident_status',$this->resident_status,true);
+		$criteria->compare('is_closed','0');
+    
 
 		return new CActiveDataProvider($this, array(
 			'criteria'=>$criteria,
-      'pagination'=>false,
+      //'pagination'=>false,
 		));
 	}
 }

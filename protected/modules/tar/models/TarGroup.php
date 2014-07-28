@@ -12,7 +12,11 @@
  */
 class TarGroup extends CActiveRecord
 {
-	/**
+	public static function getList(){
+    return CHtml::listdata(self::model()->findAll(),'id','name');
+  }
+  
+  /**
 	 * Returns the static model of the specified AR class.
 	 * @param string $className active record class name.
 	 * @return TarGroup the static model class

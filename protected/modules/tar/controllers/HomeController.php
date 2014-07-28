@@ -1,6 +1,6 @@
 <?php
 
-class HomeController extends CController
+class HomeController extends Controller
 {
   /**
   * @return array action filters
@@ -21,7 +21,7 @@ class HomeController extends CController
     {
         return array(
             array('allow',  // allow all users to perform 'index' and 'view' actions
-                'actions'=>array('index','report'),
+                'actions'=>array('index'),
                 'users'=>array('@'),
             ),
             array('deny',  // deny all users
@@ -32,16 +32,7 @@ class HomeController extends CController
  
   public function actionIndex()
 	{
-    $model = new TarLog;
-    
-    //ajax validation for the TAR form on homepage
-    if(!empty($_POST['TarLog'])){
-      echo CActiveForm::validate($model);
-      Yii::app()->end();
-    }
-    
-    $this->render('home',array('model'=>$model));
-    
+    $this->redirect('tar/log');    
 	}
   
   public function actionReport(){

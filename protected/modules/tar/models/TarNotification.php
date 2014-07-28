@@ -5,14 +5,11 @@
  *
  * The followings are the available columns in table 'tar_notification':
  * @property integer $id
- * @property string $from_user
- * @property string $to_user
+ * @property string $to_email
  * @property string $subject
  * @property string $message
  * @property integer $sent
  * @property string $sent_datetime
- * @property integer $seen
- * @property string $seen_datetime
  * @property string $timestamp
  */
 class TarNotification extends CActiveRecord
@@ -43,13 +40,13 @@ class TarNotification extends CActiveRecord
 		// NOTE: you should only define rules for those attributes that
 		// will receive user inputs.
 		return array(
-			array('to_user, subject, message', 'required'),
-			array('sent, seen', 'numerical', 'integerOnly'=>true),
-			array('from_user, to_user, subject', 'length', 'max'=>45),
-			array('sent_datetime, seen_datetime, timestamp', 'safe'),
+			array('to_email, subject, message', 'required'),
+			array('sent', 'numerical', 'integerOnly'=>true),
+			array('to_email, subject', 'length', 'max'=>45),
+			array('sent_datetime, timestamp', 'safe'),
 			// The following rule is used by search().
 			// Please remove those attributes that should not be searched.
-			array('id, from_user, to_user, subject, message, sent, sent_datetime, seen, seen_datetime, timestamp', 'safe', 'on'=>'search'),
+			array('id, to_email, subject, message, sent, sent_datetime, timestamp', 'safe', 'on'=>'search'),
 		);
 	}
 
@@ -71,14 +68,11 @@ class TarNotification extends CActiveRecord
 	{
 		return array(
 			'id' => 'ID',
-			'from_user' => 'From User',
-			'to_user' => 'To User',
+			'to_email' => 'To Email',
 			'subject' => 'Subject',
 			'message' => 'Message',
 			'sent' => 'Sent',
 			'sent_datetime' => 'Sent Datetime',
-			'seen' => 'Seen',
-			'seen_datetime' => 'Seen Datetime',
 			'timestamp' => 'Timestamp',
 		);
 	}
@@ -95,14 +89,11 @@ class TarNotification extends CActiveRecord
 		$criteria=new CDbCriteria;
 
 		$criteria->compare('id',$this->id);
-		$criteria->compare('from_user',$this->from_user,true);
-		$criteria->compare('to_user',$this->to_user,true);
+		$criteria->compare('to_email',$this->to_email,true);
 		$criteria->compare('subject',$this->subject,true);
 		$criteria->compare('message',$this->message,true);
 		$criteria->compare('sent',$this->sent);
 		$criteria->compare('sent_datetime',$this->sent_datetime,true);
-		$criteria->compare('seen',$this->seen);
-		$criteria->compare('seen_datetime',$this->seen_datetime,true);
 		$criteria->compare('timestamp',$this->timestamp,true);
 
 		return new CActiveDataProvider($this, array(

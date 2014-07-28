@@ -12,6 +12,8 @@ class TarModule extends CWebModule
 			'tar.models.*',
 			'tar.components.*',
       'application.models.Facility',
+      'application.models.User',
+      'application.components.Helper',
 		));
 	}
 

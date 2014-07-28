@@ -1,14 +1,4 @@
-<?php $form=$this->beginWidget('bootstrap.widgets.TbActiveForm',array(
-	'id'=>'tar-log-form',
-	'enableAjaxValidation'=>false,
-  'enableClientValidation'=>true,
-  'action'=>Yii::app()->createAbsoluteUrl('tar/log'),
-  'clientOptions'=>array(
-    'validateOnChange'=>true,  
-  )
-)); ?>
-
-<p class="alert alert-error">Fields with <span class="required">*</span> are required.</p>
+<p class="alert alert-warning other-controls">Fields with <span class="required">*</span> are required.</p>
 
 <p>
  <?php
@@ -22,7 +12,7 @@
       <div class="row-fluid">
         <div class="span12">
         <?php echo BHtml::textField($model,'resident',array('class'=>'span12'),$form); ?>
-        <?php echo BHtml::dropDownList($model,'facility_id',TarHelper::getFacilityList(),array('class'=>'span12'),$form); ?>
+        <?php echo BHtml::dropDownList($model,'facility_id',TarUser::getFacilityList(true),array('class'=>'span12'),$form); ?>
         <?php echo BHtml::textField($model,'admit_date',array('class'=>'span12 datepicker'),$form); ?>
         </div>
       </div> 
@@ -76,21 +66,3 @@
 <!--   </fieldset> --> 
   </div>
 </div>
-
-<!-- Procedures, Alerts, Activity Tabs -->
-<div class="row-fluid" id="proc-alert-activity-panel">
-  <div class="span12">
-    <ul class="nav nav-tabs">
-      <li class="active"><a href="#tab1" data-toggle="tab"><strong>Procedures and Checklists</strong></a></li>
-      <li><a href="#tab2" data-toggle="tab"><strong>Configured Alerts</strong></a></li>
-      <li><a href="#tab3" data-toggle="tab"><strong>Activity Log</strong></a></li>
-    </ul>
-    <div class="tab-content">
-      <div class="tab-pane active" id="tab1"><?php $this->renderPartial('_tar_form_procedures_checklist'); ?></div>
-      <div class="tab-pane" id="tab2"><?php $this->renderPartial('_tar_form_alerts'); ?></div>
-      <div class="tab-pane" id="tab3"><?php $this->renderPartial('_tar_form_activity'); ?></div>            
-    </div>
-  </div>
-</div>
-
-<?php $this->endWidget(); ?>

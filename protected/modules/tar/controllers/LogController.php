@@ -15,7 +15,6 @@ class LogController extends Controller
 	{
 		return array(
 			'accessControl', // perform access control for CRUD operations
-			'postOnly + delete', // we only allow deletion via POST request
 		);
 	}
 
@@ -27,8 +26,8 @@ class LogController extends Controller
 	public function accessRules()
 	{
 		return array(
-			array('allow',  // allow all users to perform 'index' and 'view' actions
-				'actions'=>array('index'),
+			array('allow',
+				'actions'=>array('index','create','view','update','close','followup'),
 				'users'=>array('@'),
 			),
 			array('deny',  // deny all users
@@ -38,49 +37,176 @@ class LogController extends Controller
 	}
 
 	/**
-	 * Pure RESTful API
+	 * Displays a particular model.
+	 * @param integer $id the ID of the model to be displayed
 	 */
-  public function actionIndex($id=''){ //sleep(1);
-    switch($_SERVER['REQUEST_METHOD']){
-      case 'GET':
-        $model=new TarLog('search');
-        $model->unsetAttributes();  // clear any default values
-        if(isset($_GET['TarLog']))
-            $model->attributes=$_GET['TarLog'];
+	public function actionView($id)
+	{
+		$this->render('view',array(
+			'model'=>$this->loadModel($id),
+		));
+	}
 
-        $this->render('/home/_home_tar_list',array(
-            'model'=>$model,
-        ));
-        //throw new CHttpException(501);
-      break;
-      case 'POST':
-        $model = new TarLog;
-        $model->attributes = $_POST['TarLog'];
-        if($model->save()){
-          echo $model->case_id;
-        }else{
-          $errors = array(''=>'Please correct the following:');
-          foreach($model->getErrors() as $key=>$error){
-            $errors[$key] = implode(', ',$error);
-          }
-          throw new CHttpException(500,implode("\n",$errors));
-        }
-      break;
-      case 'PUT':
-        throw new CHttpException(501);
-      break;
-      case 'DELETE':
-        throw new CHttpException(501);
-      break;
-    }  
-  }     
+	/**
+	 * Creates a new model.
+	 * If creation is successful, the browser will be redirected to the 'view' page.
+	 */
+	public function actionCreate()
+	{
+		$model=new TarLog;
+
+		// Uncomment the following line if AJAX validation is needed
+		// $this->performAjaxValidation($model);
+
+		if(isset($_POST['TarLog']))
+		{
+			$model->attributes=$_POST['TarLog'];
+			if($model->save()){
+        TarActivityTrail::log('Created','Created by '.Yii::app()->user->getState('user'),$model->case_id);
+        $this->redirect(array('update','id'=>$model->case_id));
+      }
+				
+		}
+
+		$this->render('create',array(
+			'model'=>$model,
+		));
+	}
+
+	/**
+	 * Updates a particular model.
+	 * If update is successful, the browser will be redirected to the 'view' page.
+	 * @param integer $id the ID of the model to be updated
+	 */
+	public function actionUpdate($id)
+	{
+		$model=$this->loadModel($id);
+
+		// Uncomment the following line if AJAX validation is needed
+		// $this->performAjaxValidation($model);
+
+		if(isset($_POST['TarLog']))
+		{
+			$model->attributes=$_POST['TarLog'];
+      
+			if($model->save()){
+        TarActivityTrail::log('Modified','Modified by '.Yii::app()->user->getState('user'),$model->case_id);
+        $this->redirect(array('update','id'=>$model->case_id));
+      }
+		}
+
+		$this->render('update',array(
+			'model'=>$model,
+		));
+	}
+  
+  /**
+	 * Closes a particular case.
+	 * @param integer $id the ID of the model to be displayed
+	 */
+	public function actionClose($id)
+	{
+    $model = $this->loadModel($id);
+    
+    // Uncomment the following line if AJAX validation is needed
+		$this->performAjaxValidation($model);
+    
+    if($model->status_id == TarLog::$STATUS_APPROVED){
+      $model->close()->save(false);
+      TarActivityTrail::log('Closed','Closed by '.Yii::app()->user->getState('user').'. Reason was: APPROVED',$model->case_id);
+      $this->render('close_success',array('model'=>$model));
+      Yii::app()->end();
+    }elseif(isset($_POST['TarLog'])){
+      $model->attributes = $_POST['TarLog'];
+      $model->scenario = 'close';
+      if($model->validate()){
+        $model->close()->save(false);
+        TarActivityTrail::log('Closed','Closed by '.Yii::app()->user->getState('user').'. Reason was: '.$model->reason_for_closing,$model->case_id);
+        $this->render('close_success',array('model'=>$model));
+        Yii::app()->end();  
+      }   
+    }
+    
+    $this->render('close',array('model'=>$model));  
+	}
+  
+  /**
+	 * Sends a follow up notice for a particular case.
+	 * @param integer $id the ID of the model to be displayed
+	 */
+	public function actionFollowup($id){
+    $model = $this->loadModel($id);
+    $model->scenario = 'followup';
+    
+    // Uncomment the following line if AJAX validation is needed
+		$this->performAjaxValidation($model);
+    
+    if(isset($_POST['TarLog'])){
+      $model->attributes = $_POST['TarLog'];
+      if($model->validate()){
+        $model->followUp();
+        TarActivityTrail::log('Follow Up','Follow Up by '.Yii::app()->user->getState('user').'. Message was: '.$model->message,$model->case_id);
+        $this->render('followup_success',array('model'=>$model));
+        Yii::app()->end();
+      }
+    }
+    
+    $this->render('followup',array('model'=>$model));  
+  }
+
+	/**
+	 * Deletes a particular model.
+	 * If deletion is successful, the browser will be redirected to the 'admin' page.
+	 * @param integer $id the ID of the model to be deleted
+	 */
+	public function actionDelete($id)
+	{
+		if(Yii::app()->request->isPostRequest)
+		{
+			// we only allow deletion via POST request
+			$this->loadModel($id)->delete();
+
+			// if AJAX request (triggered by deletion via admin grid view), we should not redirect the browser
+			if(!isset($_GET['ajax']))
+				$this->redirect(isset($_POST['returnUrl']) ? $_POST['returnUrl'] : array('admin'));
+		}
+		else
+			throw new CHttpException(400,'Invalid request. Please do not repeat this request again.');
+	}
+
+	/**
+	 * Lists all models.
+	 */
+  public function actionIndex(){
+    $this->actionAdmin();
+  }
+	public function actionIndex0()
+	{
+		$dataProvider=new CActiveDataProvider('TarLog');
+		$this->render('index',array(
+			'dataProvider'=>$dataProvider,
+		));
+	}
+
+	/**
+	 * Manages all models.
+	 */
+	public function actionAdmin()
+	{
+		$model=new TarLog('search');
+		$model->unsetAttributes();  // clear any default values
+		if(isset($_GET['TarLog']))
+			$model->attributes=$_GET['TarLog'];
+
+		$this->render('home',array(
+			'model'=>$model,
+		));
+	}
 
 	/**
 	 * Returns the data model based on the primary key given in the GET variable.
 	 * If the data model is not found, an HTTP exception will be raised.
-	 * @param integer $id the ID of the model to be loaded
-	 * @return TarLog the loaded model
-	 * @throws CHttpException
+	 * @param integer the ID of the model to be loaded
 	 */
 	public function loadModel($id)
 	{
@@ -92,7 +218,7 @@ class LogController extends Controller
 
 	/**
 	 * Performs the AJAX validation.
-	 * @param TarLog $model the model to be validated
+	 * @param CModel the model to be validated
 	 */
 	protected function performAjaxValidation($model)
 	{
