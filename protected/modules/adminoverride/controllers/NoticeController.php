@@ -96,8 +96,12 @@ class NoticeController extends Controller
 		if(isset($_POST['Notice']))
 		{
 			$model->attributes=$_POST['Notice'];
-			if($model->save())
-				$this->redirect(array('view','id'=>$model->id));
+			if($model->save()){
+        //log audit
+        Yii::log('ADMIN: '.Yii::app()->user->getState('user').' manually edited notice ID '.$model->id,'audit','audit');
+        $this->redirect(array('view','id'=>$model->id));
+      }
+				
 		}
 
 		$this->render('update',array(

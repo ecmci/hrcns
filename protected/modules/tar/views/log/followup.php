@@ -11,6 +11,10 @@ $this->menu=array(
 );
 ?>
 
-<h1 class="page-header">Follow Up TAR Case # <?php echo $model->case_id; ?></h1>
+<h1 class="page-header">Log Activity for TAR Case # <?php echo $model->case_id; ?></h1>
+
+<p class="alert alert-info">
+Log any calls, emails and any other activities being done for this TAR.
+</p>
 
 <?php $this->renderPartial('_form_followup',array('model'=>$model)); ?>

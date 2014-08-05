@@ -40,9 +40,186 @@
 class TarLog extends CActiveRecord
 {
 	public $age_in_days, $last_activity, $data_struct_checklists, $data_struct_alerts, $reason_for_closing, $message, $send_email, $send_email_to;
-  private $DB_DATE_FORMAT = 'Y-m-d';
-  private $HUMAN_DATE_FORMAT = 'm/d/Y';
+  public $DB_DATE_FORMAT = 'Y-m-d';
+  public $HUMAN_DATE_FORMAT = 'm/d/Y';
+  public $HUMAN_DATETIME_FORMAT = 'm/d/Y h:i A';
+  public $is_cron_trigerred = false;
+  
+  //hard coded status IDs
+  public static $STATUS_TO_BE_APPLIED = '1';
+  public static $STATUS_UNDER_REVIEW = '2';
+  public static $STATUS_DEFERRED = '3';
+  public static $STATUS_DENIED = '4';
   public static $STATUS_APPROVED = '5';
+  
+  //hard coded thresholds
+  public static $NORMAL = '21';
+  public static $WARNING = '30';
+  public static $CRITICAL = '3';
+  
+    
+  
+  
+  /**************** CRON JOBS ***************/  
+  
+  /**
+   * WEEKLY: report of all open cases
+   */
+  public function reportOpenCases()
+    {
+        $criteria=new CDbCriteria;
+        $criteria->with = array('status','facility');
+
+        $criteria->compare('created_by_user_id',$this->created_by_user_id);
+        $criteria->compare('facility_id',$this->facility_id);
+        $criteria->compare('is_closed','0');
+        
+        $criteria->order = "requested_dos_date_from asc, status_id desc";
+
+        return new CActiveDataProvider($this, array(
+            'criteria'=>$criteria,
+            'pagination'=>false
+        ));
+    }           
+  
+  /**
+   * DAILY: For all open, process configured alerts
+   */
+  public function processCustomAlerts(){
+    $cases = self::model()->findAll("is_closed = 0");
+    if($cases){
+      foreach($cases as $case){
+        $cfg_alerts = CJSON::decode($case->alerts->data);
+        if($cfg_alerts){
+          foreach($cfg_alerts as $cfg_alert){
+            if( ($cfg_alert['status'] == $case->status_id) and ( $case->age_in_days >= $cfg_alert['age']) ){
+              //email
+              $subject = "TAR ".$case->condition." Alert | Case #".$case->case_id." Needs Your Attention";
+              $message = "TAR Case # ".$case->case_id." is ".$case->age_in_days." days old and it is still on ".$case->status->name." status.\n\n";
+              if(!empty($cfg_alert['email'])){
+                foreach($cfg_alert['email'] as $email){
+                  Helper::queueMail($email,$subject,$message);
+                }
+              }
+            }
+          }  
+        }  
+      }
+    }   
+  }     
+  
+  
+  /**
+   *  DAILY: For all open cases, update the alert thresholds;
+   *  Should be run once daily preferrably at 12:05AM    
+   */
+  public function updateThreshold(){
+    $open_cases = self::model()->findAll("is_closed = 0");
+    if($open_cases){
+      foreach($open_cases as $open_case){
+        $open_case->condition = $open_case->getUrgencyLevel();
+        $open_case->is_cron_trigerred = true;
+        $open_case->save(false);  
+      }
+    }
+  }     
+  
+  
+  /**
+   *  DAILY:  Check for open cases which are not 'Approved' and create a summary for each status per urgency and send IM/email to its requester 
+   *  The summary is sent as message and email. 
+   *  Should be run once daily preferrably at 12:05AM
+   */
+  public function summarizeOpenCases(){
+    foreach(TarUser::model()->findAll() as $tar_user){
+      $c = new CDbCriteria;
+      $c->select = "t.condition, count( t.condition ) AS notes";
+      $c->group = "t.condition";
+      $c->compare('t.is_closed','0');
+      $c->compare('t.created_by_user_id',$tar_user->id);
+      $data = array(
+        'Normal'=>'',
+        'Warning'=>'',
+        'Critical'=>'',
+      );
+      $cases = self::model()->findAll($c);
+      if($cases){
+        foreach($cases as $case){
+          $data[$case->condition] = $case->notes;    
+        }
+        $subject = "TAR | Open Cases That Need Your Attention";
+        $message = "Summary:\n\n";
+        $message .= CHtml::link('Normal('.$data['Normal'].')',Yii::app()->createUrl('tar/log?TarLog[condition]=Normal')).', ';
+        $message .= CHtml::link('Warning('.$data['Warning'].')',Yii::app()->createUrl('tar/log?TarLog[condition]=Warning')).', ';
+        $message .= CHtml::link('Critical('.$data['Critical'].')',Yii::app()->createUrl('tar/log?TarLog[condition]=Critical'));        
+  
+        //message the creator
+        $msg = new TarMessaging;
+        $msg->from_user_id = TarUser::$SYS_ADM_ID;
+        $msg->to_user_id = $tar_user->id;
+        $msg->message = $subject.' '.$message;
+        $msg->is_cron_triggered = true;
+        $msg->save(false);
+      }
+    }  
+  }
+  
+   /**************** CRON JOBS ***************/ 
+  
+    
+
+  /**
+   * Determine urgency levels
+   * @return string Urgency Level   
+   */     
+  public function getUrgencyLevel(){
+    switch($this->status_id){
+      case self::$STATUS_TO_BE_APPLIED: 
+      case self::$STATUS_UNDER_REVIEW:
+        if($this->age_in_days >= 31){
+          return 'Critical';
+        }elseif($this->age_in_days >= 22){
+          return 'Warning';
+        }else{
+          return 'Normal';
+        }      
+      break;
+      case self::$STATUS_DEFERRED:
+      case self::$STATUS_DENIED:
+        $valid_time = strtotime($this->denied_deferred_date);
+        if($valid_time){        
+          $date_deferred_denied = new DateTime(date('Y-m-d',$valid_time));
+          $date_today = new DateTime(date('Y-m-d',time()));
+          $interval = $date_deferred_denied->diff($date_today);
+          $deferred_denined_days_ago = $interval->days; 
+          if($deferred_denined_days_ago > 3){
+            return "Critical";
+          }else{
+            return "Normal";
+          }  
+        }else{
+          return "Undetermined";
+        }
+      break;
+      case self::$STATUS_APPROVED:
+        $valid_time = strtotime($this->approved_modified_date);
+        if($valid_time){        
+          $date_approved = new DateTime(date('Y-m-d',$valid_time));
+          $date_today = new DateTime(date('Y-m-d',time()));
+          $interval = $date_approved->diff($date_today);
+          $approved_days_ago = $interval->days; 
+          if($approved_days_ago > 2){
+            return "Critical";
+          }else{
+            return "Normal";
+          }  
+        }else{
+          return "Undetermined";
+        }
+      break;
+      default: return "Normal"; 
+    }
+  }
   
   /**
    * Override parent: Do stuff after find
@@ -58,13 +235,21 @@ class TarLog extends CActiveRecord
     $this->applied_date = strtotime($this->applied_date) ? date($this->HUMAN_DATE_FORMAT,strtotime($this->applied_date)) : '';
 
     //calc age
+    $this->calcAge();
+
+    return parent::afterFind();
+  }
+  
+  /**
+   * Calculate age
+   * @return int no. of days   
+   */     
+  private function calcAge(){
     $requested = new DateTime(date('Y-m-d',strtotime($this->requested_dos_date_from)));
     $today = new DateTime(date('Y-m-d',time()));
     $interval = $requested->diff($today);
     $this->age_in_days = $interval->days;
-
-    return parent::afterFind();
-  }      
+  }     
   
   
   /**
@@ -95,7 +280,7 @@ class TarLog extends CActiveRecord
     if($this->isNewRecord){
       $this->setDefaultProcedures();
       $this->setDefaultAlerts();
-    }elseif($this->scenario == 'update'){
+    }elseif($this->scenario == 'update' and !$this->is_cron_trigerred){
       $this->updateChecklist();
       $this->updateAlerts();
     }else{
@@ -112,17 +297,20 @@ class TarLog extends CActiveRecord
    ***********************/
    
    /**
-    * Send follow up
+    * Send follow up to the creator
     */       
   public function followUp(){
-    $message = new TarMessaging;
-    $message->from_user_id = Yii::app()->user->getState('id');
-    $message->to_user_id = $this->created_by_user_id;
-    $message->message = $this->message;
-    $message->save(false);
+    $mess = Yii::app()->user->getState('user').' said: '.$this->message;
+    if(Yii::app()->user->getState('id') != $this->created_by_user_id){
+      $message = new TarMessaging;
+      $message->from_user_id = Yii::app()->user->getState('id');
+      $message->to_user_id = $this->created_by_user_id;
+      $message->message = $mess;
+      $message->save(false);
+    }
     
     if($this->send_email == '1'){
-      Helper::queueMail($this->send_email_to,'TAR Follow Up | Case #'.$this->case_id,$this->message);
+      Helper::queueMail($this->send_email_to,'TAR Activity | Case #'.$this->case_id, $mess);
     } 
   }
    
@@ -166,7 +354,7 @@ class TarLog extends CActiveRecord
    * Setup default alerts
    */
   private function setDefaultAlerts(){
-    $ds_tpl = TarAlertsTemplate::model()->find("name='Default'");
+    $ds_tpl = TarAlertsTemplate::model()->findByPk("1"); //default template
     $dstruct_tpl = empty($ds_tpl) ? array() : $ds_tpl->data_struct;
     $alerts = new TarAlerts;
     $alerts->data = CJSON::encode($dstruct_tpl);
@@ -179,7 +367,7 @@ class TarLog extends CActiveRecord
    * Setup default procedures and checklist
    */
   private function setDefaultProcedures(){
-    $data_struct_tpl = TarProcedureTemplate::model()->find("name='Default'");
+    $data_struct_tpl = TarProcedureTemplate::model()->findByPk("1"); //default template
     $data_struct = empty($data_struct_tpl) ? array() : $data_struct_tpl->data_struct;
     $procedure = new TarProcedureChecklist;
 
@@ -230,20 +418,74 @@ class TarLog extends CActiveRecord
 		// NOTE: you should only define rules for those attributes that
 		// will receive user inputs.
 		return array(
-			array('resident, requested_dos_date_from, status_id, facility_id', 'required','on'=>'insert'),
+			array('resident, requested_dos_date_from, status_id, facility_id, resident_status, admit_date', 'required'),
+      array('approved_modified_date','validateApprovedModifiedDate','on'=>'insert, update'),
+      array('denied_deferred_date','validateDeniedDeferredDate','on'=>'insert, update'),
+      array('applied_date','validateAppliedDate','on'=>'insert, update'),
+      array('requested_dos_date_thru','validateDosThru','on'=>'insert, update'),
+      array('control_num','validateControlNum','on'=>'insert, update'),
+      //array('aging_amount','validateAgingAmount','on'=>'insert, update'),
+      //array('requested_dos_date_thru','validateRequestedThru','on'=>'insert, update'),            
       array('reason_for_closing','required','on'=>'close'),
       array('message','required','on'=>'followup'),
       array('send_email_to','email','on'=>'followup'),
       array('send_email_to','validateEmailTo','on'=>'followup'),
 			array('is_closed, approved_care_id, status_id, created_by_user_id, facility_id', 'numerical', 'integerOnly'=>true),
 			array('aging_amount', 'numerical'),
-			array('control_num, resident, medical_num, dx_code, type, reason_for_closing, resident_status', 'length', 'max'=>45),
-      array('control_num, resident, medical_num, dx_code, admit_date, type, requested_dos_date_from, requested_dos_date_thru, applied_date, denied_deferred_date, approved_modified_date, backbill_date, aging_amount, notes, is_closed, reason_for_closing, approved_care_id, status_id, created_by_user_id, facility_id, resident_status, data_struct_checklists, data_struct_alerts, reason_for_closing, message, send_email, send_email_to', 'safe'),
+			array('control_num, resident, medical_num, dx_code, type, resident_status', 'length', 'max'=>45),
+      array('control_num, resident, medical_num, dx_code, admit_date, type, requested_dos_date_from, requested_dos_date_thru, applied_date, denied_deferred_date, approved_modified_date, backbill_date, aging_amount, notes, is_closed, reason_for_closing, approved_care_id, status_id, created_by_user_id, facility_id, resident_status, data_struct_checklists, data_struct_alerts, reason_for_closing, message, send_email, send_email_to, condition', 'safe'),
 			// The following rule is used by search().
 			// Please remove those attributes that should not be searched.
 			array('case_id, control_num, resident, medical_num, dx_code, admit_date, type, requested_dos_date_from, requested_dos_date_thru, applied_date, denied_deferred_date, approved_modified_date, backbill_date, aging_amount, notes, is_closed, reason_for_closing, created_timestamp, approved_care_id, status_id, created_by_user_id, facility_id, resident_status', 'safe', 'on'=>'search'),
 		);
 	}
+  
+  public function validateControlNum(){
+    if(empty($this->control_num) and $this->status_id == self::$STATUS_UNDER_REVIEW){
+      $this->addError('control_num',$this->getAttributeLabel('control_num').' is required.');
+    }    
+  }
+  
+  public function validateDosThru(){
+    if(!strtotime($this->requested_dos_date_thru) and $this->status_id == self::$STATUS_UNDER_REVIEW){
+      $this->addError('requested_dos_date_thru',$this->getAttributeLabel('requested_dos_date_thru').' is required.');
+    }    
+  }
+  
+  public function validateAppliedDate(){
+    if(!strtotime($this->applied_date) and $this->status_id == self::$STATUS_UNDER_REVIEW){
+      $this->addError('applied_date',$this->getAttributeLabel('applied_date').' is required.');
+    }    
+  }
+  
+  public function validateWhenApplied0(){
+    if($this->status_id == self::$STATUS_UNDER_REVIEW){
+      if(empty($this->control_num)){
+        $this->addError('control_num',$this->getAttributeLabel('control_num').' is required.');
+      }
+      if(empty($this->aging_amount)){
+        $this->addError('aging_amount',$this->getAttributeLabel('aging_amount').' is required.');
+      }
+      if(empty($this->control_num)){
+        $this->addError('requested_dos_date_thru',$this->getAttributeLabel('requested_dos_date_thru').' is required.');
+      }
+      if(!strtotime($this->applied_date) and $this->status_id == self::$STATUS_UNDER_REVIEW){
+        $this->addError('applied_date',$this->getAttributeLabel('applied_date').' is required.');
+      }
+    }
+  }
+  
+  public function validateApprovedModifiedDate(){
+    if(!strtotime($this->approved_modified_date) and $this->status_id == self::$STATUS_APPROVED){
+      $this->addError('approved_modified_date',$this->getAttributeLabel('approved_modified_date').' is required.');
+    }
+  }
+  
+  public function validateDeniedDeferredDate(){
+    if(!strtotime($this->denied_deferred_date) and ($this->status_id == self::$STATUS_DENIED or $this->status_id == self::$STATUS_DEFERRED)){
+      $this->addError('denied_deferred_date',$this->getAttributeLabel('denied_deferred_date').' is required.');
+    }
+  }
   
   /**
    * Custom validation
@@ -301,6 +543,9 @@ class TarLog extends CActiveRecord
 			'created_by_user_id' => 'Created By User',
 			'facility_id' => 'Facility',
 			'resident_status' => 'Resident Status',
+      'send_email' => 'Also Send Email',
+      'send_email_to' => 'Send A Copy To',
+      'message' => 'Please specify the things that you did today.',
 		);
 	}
 
@@ -318,14 +563,91 @@ class TarLog extends CActiveRecord
 		$criteria->compare('case_id',$this->case_id);
 		$criteria->compare('control_num',$this->control_num,true);
 		$criteria->compare('resident',$this->resident,true);
+    $criteria->compare('status_id',$this->status_id);
 		$criteria->compare('requested_dos_date_from',$this->requested_dos_date_from,true);
 		$criteria->compare('requested_dos_date_thru',$this->requested_dos_date_thru,true);
 		$criteria->compare('is_closed','0');
-    
+    $criteria->compare('t.condition',$this->condition,true);
+
+    //filter own facility
+    $criteria->addCondition("facility_id in (select facility_id from tar_user_facility where user_id = ".Yii::app()->user->getState('id').")");
+
+    $criteria->order = "requested_dos_date_from asc";
 
 		return new CActiveDataProvider($this, array(
 			'criteria'=>$criteria,
       //'pagination'=>false,
 		));
 	}
+  
+  /**
+     * Retrieves a list of models based on the current search/filter conditions.
+     * @return CActiveDataProvider the data provider that can return the models based on the search/filter conditions.
+     */
+    public function search()
+    {
+        // Warning: Please modify the following code to remove attributes that
+        // should not be searched.
+
+        $criteria=new CDbCriteria;
+        
+        $criteria->with = array('status');
+
+        $criteria->compare('case_id',$this->case_id);
+        $criteria->compare('control_num',$this->control_num,true);
+        $criteria->compare('resident',$this->resident,true);
+        $criteria->compare('medical_num',$this->medical_num,true);
+        $criteria->compare('dx_code',$this->dx_code,true);
+        $criteria->compare('admit_date',$this->admit_date,true);
+        $criteria->compare('type',$this->type,true);
+        $criteria->compare('applied_date',$this->applied_date,true);
+        $criteria->compare('denied_deferred_date',$this->denied_deferred_date,true);
+        $criteria->compare('approved_modified_date',$this->approved_modified_date,true);
+        $criteria->compare('backbill_date',$this->backbill_date,true);
+        $criteria->compare('aging_amount',$this->aging_amount);
+        $criteria->compare('notes',$this->notes,true);
+        $criteria->compare('is_closed',$this->is_closed);
+        $criteria->compare('reason_for_closing',$this->reason_for_closing,true);
+        $criteria->compare('created_timestamp',$this->created_timestamp,true);
+        $criteria->compare('approved_care_id',$this->approved_care_id);
+        $criteria->compare('status_id',$this->status_id);
+        $criteria->compare('created_by_user_id',$this->created_by_user_id);
+        $criteria->compare('facility_id',$this->facility_id);
+        $criteria->compare('resident_status',$this->resident_status,true);
+        $criteria->compare('condition',$this->condition,true);
+        
+        //requested range
+        
+        
+        if(!empty($this->requested_dos_date_from) and !empty($this->requested_dos_date_thru)){
+          $criteria->compare('requested_dos_date_from','>='.date('Y-m-d',strtotime($this->requested_dos_date_from)));
+          $criteria->compare('requested_dos_date_thru','<='.date('Y-m-d',strtotime($this->requested_dos_date_thru)));  
+        }elseif(!empty($this->requested_dos_date_from) and empty($this->requested_dos_date_thru)){
+          $criteria->compare('requested_dos_date_from','>='.date('Y-m-d',strtotime($this->requested_dos_date_from)));
+        }elseif(empty($this->requested_dos_date_from) and !empty($this->requested_dos_date_thru)){
+          $criteria->compare('requested_dos_date_thru','<='.date('Y-m-d',strtotime($this->requested_dos_date_thru)));
+        }else{
+        
+        }
+
+        //filter own facility
+        $criteria->addCondition("facility_id in (select facility_id from tar_user_facility where user_id = ".Yii::app()->user->getState('id').")");
+
+        $criteria->order = "is_closed asc, requested_dos_date_from asc";
+        
+        return new CActiveDataProvider($this, array(
+            'criteria'=>$criteria,
+        ));
+    }
+  
+  /**** UI Fxns ********/
+  public function rowBackgroundColor(){
+    if($this->condition == 'Critical'){
+      return 'error';
+    }elseif($this->condition == 'Warning'){
+      return 'warning';
+    }else{
+      return '';
+    }
+  }
 }

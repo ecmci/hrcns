@@ -63,7 +63,7 @@ class TarActivityTrail extends CActiveRecord
 		return array(
 			array('action, message, timestamp, log_case_id', 'required'),
 			array('log_case_id', 'numerical', 'integerOnly'=>true),
-			array('action, message, timestamp', 'length', 'max'=>45),
+			array('action, timestamp', 'length', 'max'=>45),
 			// The following rule is used by search().
 			// Please remove those attributes that should not be searched.
 			array('id, action, message, timestamp, log_case_id', 'safe', 'on'=>'search'),

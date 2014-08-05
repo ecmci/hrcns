@@ -156,7 +156,7 @@ class Notice extends CActiveRecord
 	 * Sets the the signature
 	 */
     private function setRoute(){
-		 if($this->decision == '2'){
+     if($this->decision == '2'){
             $this->routeBackToBOM();
          }elseif($this->edit == '1' and $this->push == '0'){
             return true; //make this notice stay in the current status and group

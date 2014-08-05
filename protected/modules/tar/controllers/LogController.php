@@ -30,11 +30,51 @@ class LogController extends Controller
 				'actions'=>array('index','create','view','update','close','followup'),
 				'users'=>array('@'),
 			),
+      array('allow',
+				'actions'=>array('cron','test'),
+				'users'=>array('*'),
+			),
 			array('deny',  // deny all users
 				'users'=>array('*'),
 			),
 		);
 	}
+  
+  /**
+	 * CRON job
+	 */
+	public function actionCron($f='daily'){
+    try{
+      $model = new TarLog;
+      switch($f){
+        case 'daily':
+          $model->updateThreshold();
+          $model->summarizeOpenCases();
+          $model->processCustomAlerts();
+        break;
+        case 'weekly':
+          //send open cases report to all users per facility
+          $model->is_closed = '0';
+          foreach(Facility::model()->findAll() as $f){
+            $model->facility_id = $f->idFACILITY;
+            $dataProvider = $model->reportOpenCases();
+            if($dataProvider){
+              $subject = 'TAR Weekly Report | Open Cases for '.Facility::model()->findByPk($f->idFACILITY);
+              $message = $this->renderPartial('_weekly_report',array('dataProvider'=>$dataProvider),true);
+              $users = TarUserFacility::model()->findAll("facility_id = ".$f->idFACILITY);
+              if($users){
+                foreach($users as $user){
+                  Helper::queueMail($user->user->parentUser->username,$subject,$message);
+                }  
+              } 
+            } 
+          }
+        break;
+      }  
+    }catch(Exception $ex){
+      Yii::log('TAR Log Cron: '.$ex->getMessage(),'error','app');  
+    }  
+  }
 
 	/**
 	 * Displays a particular model.
@@ -81,6 +121,7 @@ class LogController extends Controller
 	public function actionUpdate($id)
 	{
 		$model=$this->loadModel($id);
+    $posted = false; //flag to enable form controls
 
 		// Uncomment the following line if AJAX validation is needed
 		// $this->performAjaxValidation($model);
@@ -88,6 +129,7 @@ class LogController extends Controller
 		if(isset($_POST['TarLog']))
 		{
 			$model->attributes=$_POST['TarLog'];
+      $posted = true;
       
 			if($model->save()){
         TarActivityTrail::log('Modified','Modified by '.Yii::app()->user->getState('user'),$model->case_id);
@@ -97,6 +139,7 @@ class LogController extends Controller
 
 		$this->render('update',array(
 			'model'=>$model,
+      'posted'=>$posted
 		));
 	}
   
@@ -107,6 +150,7 @@ class LogController extends Controller
 	public function actionClose($id)
 	{
     $model = $this->loadModel($id);
+    //$model->is_cron_trigerred = true;
     
     // Uncomment the following line if AJAX validation is needed
 		$this->performAjaxValidation($model);

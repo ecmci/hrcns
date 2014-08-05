@@ -11,7 +11,7 @@ $this->menu=array(
   array('label'=>'<span class="icon-pencil"></span> Edit','url'=>'#','linkOptions'=>array('onclick'=>'enableForm();')),
   array('label'=>'<span class="icon-arrow-left"></span> Undo Changes','url'=>'#','linkOptions'=>array('submit'=>array('update','id'=>$model->case_id),'confirm'=>'Are you sure you want to undo all changes?')),
 	array('label'=>'<span class="icon-ban-circle"></span> Close This Case','url'=>array('close','id'=>$model->case_id)),
-	array('label'=>'<span class="icon-bullhorn"></span> Follow Up','url'=>array('followup','id'=>$model->case_id)),
+	array('label'=>'<span class="icon-comment"></span> Log Activity','url'=>array('followup','id'=>$model->case_id)),
   array('label'=>'<span class="icon-step-backward"></span> Back to List','url'=>array('index')),
 );
 ?>
@@ -23,7 +23,7 @@ $this->menu=array(
 	//'enableAjaxValidation'=>true,
   'enableClientValidation'=>true,
   'clientOptions'=>array(
-    //'validateOnChange'=>true,  
+    'validateOnSubmit'=>true,  
   )
 )); ?>
 
@@ -32,14 +32,15 @@ $this->menu=array(
     <ul class="nav nav-tabs">
       <li class="active"><a href="#tab1" data-toggle="tab"><strong>TAR Form</strong></a></li>
       <li><a href="#tab2" data-toggle="tab"><strong>Procedures and Checklists</strong></a></li>
-      <li><a href="#tab3" data-toggle="tab"><strong>Configured Alerts</strong></a></li>
-      <li><a href="#tab4" data-toggle="tab"><strong>Activity Log</strong></a></li>
+      <li><a href="#tab3" data-toggle="tab"><strong>Activity Log</strong></a></li>
+      <li><a href="#tab4" data-toggle="tab"><strong>Configured Alerts</strong></a></li>
+      
     </ul>
     <div class="tab-content">
       <div class="tab-pane active" id="tab1"><?php $this->renderPartial('_form',array('model'=>$model,'form'=>$form)); ?></div>
       <div class="tab-pane" id="tab2"><?php $this->renderPartial('_form_procedures_checklist',array('model'=>$model,'form'=>$form)); ?></div>
-      <div class="tab-pane" id="tab3"><?php $this->renderPartial('_form_alerts',array('model'=>$model,'form'=>$form)); ?></div>
-      <div class="tab-pane" id="tab4"><?php $this->renderPartial('_activity_log',array('model'=>$model)); ?></div>            
+      <div class="tab-pane" id="tab3"><?php $this->renderPartial('_activity_log',array('model'=>$model)); ?></div>
+      <div class="tab-pane" id="tab4"><?php $this->renderPartial('_form_alerts',array('model'=>$model,'form'=>$form)); ?></div>
     </div>
   </div>
 </div>
@@ -65,6 +66,19 @@ $this->menu=array(
   </div>
 </div>
 
+<div class="row-fluid">
+  <div class="span6">
+    <p class="text-left muted">
+    <small>Created By <?php echo $model->createdByUser->parentUser->f_name; ?></small> 
+    </p> 
+  </div>
+  <div class="span6">
+    <p class="text-right muted">
+    <small>Created On <?php echo date($model->HUMAN_DATETIME_FORMAT,strtotime($model->created_timestamp)); ?></small> 
+    </p> 
+  </div>
+</div>
+
 <?php $this->endWidget(); ?>
 
 <?php
@@ -75,8 +89,12 @@ $('.datepicker').datepicker({
   changeMonth : true,
   changeYear : true,
 });
-disableForm();
 ",CClientScript::POS_READY);
+if(!$posted){
+  Yii::app()->clientScript->registerScript('tar-form-disable-form-js',"
+  disableForm();
+  ",CClientScript::POS_READY);
+}
 Yii::app()->clientScript->registerScript('tar-form-fxns-js',"
 function enableForm(){
   $('form#tar-log-form input, form#tar-log-form select, form#tar-log-form textarea').each(function(){

@@ -26,7 +26,12 @@ $this->menu=array(
       'filter'=>false,
     ),    
 
-		'message',
+		
+    array(
+      'name'=>'message',
+      'value'=>$model->message,
+      'type'=>'raw',
+    ),
 		'is_seen:boolean',
 		
     array(

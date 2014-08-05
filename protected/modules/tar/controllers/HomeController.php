@@ -21,7 +21,7 @@ class HomeController extends Controller
     {
         return array(
             array('allow',  // allow all users to perform 'index' and 'view' actions
-                'actions'=>array('index'),
+                'actions'=>array('index','report'),
                 'users'=>array('@'),
             ),
             array('deny',  // deny all users

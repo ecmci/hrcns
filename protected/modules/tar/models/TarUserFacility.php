@@ -59,6 +59,7 @@ class TarUserFacility extends CActiveRecord
 		// class name for the relations automatically generated below.
 		return array(
 			'user' => array(self::BELONGS_TO, 'TarUser', 'user_id'),
+      'parentUser' => array(self::BELONGS_TO, 'TarUser', 'user_id'),
 			'facility' => array(self::BELONGS_TO, 'TarFacility', 'facility_id'),
 		);
 	}

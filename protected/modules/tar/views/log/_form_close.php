@@ -4,6 +4,12 @@
   'enableClientValidation'=>true,
 )); ?>
 
+<p>
+ <?php
+  echo $form->errorSummary($model);
+ ?>
+</p>
+
 <?php echo BHtml::textArea($model,'reason_for_closing',array('class'=>'span12'),$form); ?>
 
 <div class="row-fluid">

@@ -2,7 +2,9 @@
 
 class MessageController extends Controller
 {
-	/**
+	private $api_key = '123';
+  
+  /**
 	 * @var string the default layout for the views. Defaults to '//layouts/column2', meaning
 	 * using two-column layout. See 'protected/views/layouts/column2.php'.
 	 */
@@ -27,6 +29,10 @@ class MessageController extends Controller
 	{
 		return array(
 			array('allow',  // allow all users to perform 'index' and 'view' actions
+				'actions'=>array('getmessages','getmessages2'),
+				'users'=>array('*'),
+			),
+      array('allow',  // allow all users to perform 'index' and 'view' actions
 				'actions'=>array('index','view'),
 				'users'=>array('@'),
 			),
@@ -43,6 +49,43 @@ class MessageController extends Controller
 			),
 		);
 	}
+  
+  /**
+   * API for desktop alert client
+   */    
+  public function actionGetmessages($u='',$k=''){
+    try{
+      //trap all possible invalids
+      $u = User::model()->find("username = '$u'");
+      if(empty($u)){
+        throw new CHttpException('401','User not found!');
+      }
+      if(empty($k)){
+        throw new CHttpException('401','Key required!');
+      }elseif($k != $this->api_key){
+        throw new CHttpException('401','Wrong key!');
+      }
+      
+      //return all unseen messages for the users
+      $model = $model=new TarMessaging('search');
+      $model->to_user_id = $u;
+      $model->is_seen = '0';
+      $data = array();
+      $i=0;
+      foreach($model->getMessages()->getData() as $d){
+        $data[$i]['id'] = $d->id;
+        $data[$i]['from'] = $d->sender->f_name.' '.$d->sender->l_name;
+        $data[$i]['message'] = trim(preg_replace('/\s\s+/', ' ', strip_tags($d->message)));
+        $data[$i]['timestamp'] = date('m/d/Y h:i A',strtotime($d->timestamp));
+        $i++;
+      }
+      header('Content-type: application/json');
+      echo json_encode($data);
+      //Yii::app()->end(); 
+    }catch(Exception $ex){
+      throw $ex;
+    }
+  }
 
 	/**
 	 * Displays a particular model.

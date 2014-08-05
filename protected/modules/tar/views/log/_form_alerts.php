@@ -5,11 +5,9 @@ for($c=1 ; $c <= 45; $c++){
   $days[$c] = $c;
 }   
 ?>
-<pre>
- <?php
-  //print_r($model->data_struct_alerts);
- ?>
-</pre>
+<p class="alert alert-info">
+ By default, the user who created this TAR will recieve the notification when any of the conditions specified below is true.
+</p>
 <table class="table" id="table-alert">
   <tr>
     <th>When case is...</th>

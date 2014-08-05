@@ -14,7 +14,8 @@
  */
 class TarUser extends CActiveRecord
 {
-	public $facilities_handled;
+	public static $SYS_ADM_ID = '101'; // static user id for all messaging coming from system; as of 7.29.2014, ID is tied up to steven@evacare.net account 
+  public $facilities_handled;
   
   public static function getFacilityList(){
     $c = new CDbCriteria;

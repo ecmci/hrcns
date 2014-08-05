@@ -38,13 +38,15 @@ class NoticeController extends Controller
 			case 'NEW' : 
 			case 'WAITING' : 
 				$notice->status = 'CANCELLED';		
-				$notice->edit = '1';		
+				$notice->edit = '1';
+        $notice->push = '0';		
 			break;
 			default: throw new CHttpException(403,'Only active notices can be cancelled.');
 		}
 		
 		if($notice->save()){
-			
+		  //log audit
+      Yii::log(Yii::app()->user->getState('user').' cancelled notice ID '.$notice->id,'audit','audit');
 		}else{} 
 		$this->redirect(array('review','id'=>$notice->id));
 	}
@@ -150,6 +152,10 @@ class NoticeController extends Controller
 				$payroll->save(false);
                 $notice->save(false);
                 
+                //log audit
+                Yii::log(Yii::app()->user->getState('user').' edited notice ID '.$notice->id,'audit','audit');
+
+                
                 $this->redirect(array('review','id'=>$notice->id));
             }//end all valid
         }//end POST
@@ -185,7 +191,11 @@ class NoticeController extends Controller
 				        $employee->active_payroll_id = $notice->payroll_profile_id;
                         $employee->save(false); 
                     }
-                    $notice->save(false);                    
+                    $notice->save(false);
+                    
+                    //log audit
+                    Yii::log(Yii::app()->user->getState('user').' signed notice ID '.$notice->id.' with '.($notice->decision == '1' ? 'Yes' : 'No').' decision.','audit','audit');
+                    
                 }else{
                     //echo var_dump($notice->getErrors());
                     $f = new CActiveForm;                    
@@ -263,14 +273,8 @@ class NoticeController extends Controller
 		));
 	}
   
-	public function actionPrepare0($f,$e=''){
-		echo '<pre>';
-		$notice = new Notice;
-		$notice->attributes = $_POST['Notice'];
-		foreach($notice->licenses as $l){
-			print_r($l);
-		}
-		echo '</pre>';
+	public function actionPrepare0($f='',$e=''){
+    Yii::log(Yii::app()->user->getState('user').' user prepared notice ID 123','audit','audit');
 	}
     
     /**
@@ -373,6 +377,9 @@ class NoticeController extends Controller
 				$notice->payroll_profile_id = $payroll->id;
 				$notice->save(false);
 				
+                //log audit
+                Yii::log(Yii::app()->user->getState('user').' prepared notice ID '.$notice->id,'audit','audit');
+        
                 //display the review page
                 $this->redirect(array('review','id'=>$notice->id));
 

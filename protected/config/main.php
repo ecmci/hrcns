@@ -103,16 +103,22 @@ return array(
 					'class'=>'CFileLogRoute',
 					'levels'=>'error, warning, info',
 				),
+        array(
+					'class'=>'CFileLogRoute',
+					'levels'=>'audit',
+          'categories'=>'audit',
+          'logFile'=>'audit.log',
+				),
 //         array(
 // 					'class'=>'CProfileLogRoute',
 // 					'report'=>'summary',
 // 				),
 				// uncomment the following to show log messages on web pages
-				
+				/*
  				array(
  					'class'=>'CWebLogRoute',
  				),
-				
+				*/
 			),
 		),
 	),

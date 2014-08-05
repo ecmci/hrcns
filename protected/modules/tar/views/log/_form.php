@@ -14,6 +14,7 @@
         <?php echo BHtml::textField($model,'resident',array('class'=>'span12'),$form); ?>
         <?php echo BHtml::dropDownList($model,'facility_id',TarUser::getFacilityList(true),array('class'=>'span12'),$form); ?>
         <?php echo BHtml::textField($model,'admit_date',array('class'=>'span12 datepicker'),$form); ?>
+        <?php echo BHtml::dropDownList($model,'resident_status',array('In-Patient'=>'In-Patient','Discharged/Expired'=>'Discharged/Expired'),array('class'=>'span12 datepicker'),$form); ?>
         </div>
       </div> 
     </fieldset> 

@@ -14,7 +14,9 @@
  */
 class TarMessaging extends CActiveRecord
 {
-	
+	public $send_email = true;
+  public $is_cron_triggered = false;
+  
   public function markSeen(){
     $this->is_seen = '1';
     $this->seen_datetime = new CDbExpression('NOW()');
@@ -27,7 +29,7 @@ class TarMessaging extends CActiveRecord
   
   protected function beforeSave(){
     if($this->isNewRecord){
-      $this->from_user_id = Yii::app()->user->getState('id');
+      $this->from_user_id = (!$this->is_cron_triggered) ? Yii::app()->user->getState('id') : $this->from_user_id;
     }
     return parent::beforeSave();
   }
@@ -35,7 +37,8 @@ class TarMessaging extends CActiveRecord
   protected function afterSave(){
     if($this->isNewRecord){
       $u = User::model()->findByPk($this->to_user_id);
-      Helper::queueMail($u->username,'TAR | New Message from '.Yii::app()->user->getState('user'),$this->message);
+      if($this->send_email and !$this->is_cron_triggered)
+        Helper::queueMail($u->username,'TAR | New Message from '.Yii::app()->user->getState('user'),$this->message);
     }
     return parent::afterSave();
   }

@@ -21,11 +21,12 @@ $('.search-form form').submit(function(){
 	return false;
 });
 ");
+
 ?>
 
 <div class="panel">
   <div class="panel-heading">
-  Open Treatment Authorization Request Cases 
+  Open Treatment Authorization Request Cases </span> 
   </div>
   <div class="panel-body">
     <div class="row-fluid">
@@ -33,11 +34,13 @@ $('.search-form form').submit(function(){
       <?php $this->widget('bootstrap.widgets.TbGridView',array(
       	'id'=>'tar-log-grid',
         'summaryText'=>'Showing {start}-{end} of {count} Open Cases',
+        'summaryCssClass'=>'alert alert-info',
         'emptyText'=>'Good news! You have no open cases.',
-        'htmlOptions'=>array('class'=>'table table-hover table-striped'),
+        'htmlOptions'=>array('class'=>'table table-hover'),
       	'dataProvider'=>$model->getActiveCases(),
         'selectionChanged'=>'function(id){ location.href = "'.$this->createUrl('update').'/id/"+$.fn.yiiGridView.getSelection(id);}',
-      	'filter'=>$model,
+      	'rowCssClassExpression'=>'$data->rowBackgroundColor()',
+        'filter'=>$model,
       	'columns'=>array(
       		
           array(
@@ -66,6 +69,12 @@ $('.search-form form').submit(function(){
           array(
             'name'=>'age_in_days',
             'filter'=>false
+          ),
+          
+          array(
+            'name'=>'condition',
+            //'value'=>'$data->status->name',
+            'filter'=>CHtml::activeDropDownList($model,'condition',array('Normal'=>'Normal','Warning'=>'Warning','Critical'=>'Critical'),array('empty'=>'All')),
           ),
           /*
       		'medical_num',
