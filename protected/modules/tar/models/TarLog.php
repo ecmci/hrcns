@@ -236,9 +236,23 @@ class TarLog extends CActiveRecord
 
     //calc age
     $this->calcAge();
+    
+    //get last activity
+    $this->getLastActivity();
 
     return parent::afterFind();
   }
+  
+  /**
+   *
+   */
+  private function getLastActivity(){
+    $act = TarActivityTrail::model()->find(array(
+      'condition'=>'log_case_id = '.$this->case_id,
+      'order'=>'timestamp desc',  
+    ));
+    $this->last_activity = $act ? '<small>'.$act->message.'<br/>('.$act->timestamp.')</small>' : ''; 
+  }      
   
   /**
    * Calculate age

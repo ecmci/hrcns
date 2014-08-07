@@ -76,6 +76,11 @@ $('.search-form form').submit(function(){
             //'value'=>'$data->status->name',
             'filter'=>CHtml::activeDropDownList($model,'condition',array('Normal'=>'Normal','Warning'=>'Warning','Critical'=>'Critical'),array('empty'=>'All')),
           ),
+          array(
+            'name'=>'last_activity',
+            'filter'=>false,
+            'type'=>'raw',
+          ),
           /*
       		'medical_num',
       		'dx_code',

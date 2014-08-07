@@ -13,14 +13,14 @@ Yii::app()->clientScript->registerScriptFile(Yii::app()->baseUrl.'/js/tar-manage
 Yii::app()->clientScript->registerScriptFile(Yii::app()->baseUrl.'/js/client.restful.js');
 Yii::app()->clientScript->registerScript('tar-alert-tpl-form-ready-js',"
 $('form#tar-alerts-tpl-form').submit(function(event){
-  var url = '".(($mode==='POST') ? Yii::app()->createUrl('tar/manage/taralertstemplate/rest') : Yii::app()->createUrl('tar/manage/taralertstemplate/rest',array('id'=>$model->id)))."';
+  var url = '".(($mode==='POST') ? Yii::app()->createUrl('tar/manage/alerttemplates/rest') : Yii::app()->createUrl('tar/manage/alerttemplates/rest',array('id'=>$model->id)))."';
   var data = $(this).serialize();
   restConduit('$mode',url,data,
     function(data, textStatus, jqXHR){
       var id = data;
       if(textStatus === 'success'){
         alert('Saved.');
-        window.location = '".Yii::app()->createUrl('tar/manage/taralertstemplate/view?id=')."' + id;
+        window.location = '".Yii::app()->createUrl('tar/manage/alerttemplates/view?id=')."' + id;
       }  
     },
     function(jqXHR, textStatus, errorThrown){
@@ -94,7 +94,7 @@ $('form#tar-alerts-tpl-form').submit(function(event){
     <?php $this->widget('bootstrap.widgets.TbButton', array(
 			'buttonType'=>'link',
 			'label'=>'Cancel',
-      'htmlOptions'=>array('class'=>'btn btn-mini','href'=>Yii::app()->createUrl('tar/manage/taralertstemplate/admin')),
+      'htmlOptions'=>array('class'=>'btn btn-mini','href'=>Yii::app()->createUrl('tar/manage/alerttemplates/admin')),
 		)); ?>
 	</div>
 

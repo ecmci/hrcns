@@ -8,15 +8,15 @@
  Yii::app()->clientScript->registerScriptFile(Yii::app()->baseUrl.'/js/tar-manage-procedure-tpl.js');
  Yii::app()->clientScript->registerScriptFile(Yii::app()->baseUrl.'/js/client.restful.js');
  Yii::app()->clientScript->registerScript('tar-procedure-tpl-form-ready-js',"
- $( 'form#tar-procedure-tpl-form' ).submit(function( event ) {
-    var url = '".(($mode==='POST') ? Yii::app()->createUrl('tar/manage/tarproceduretemplate/rest') : Yii::app()->createUrl('tar/manage/tarproceduretemplate/rest',array('id'=>$model->id)))."';
+ $( 'form#tar-procedure-tpl-form' ).submit(function( event ) {  
+    var url = '".(($mode==='POST') ? Yii::app()->createUrl('tar/manage/proceduretemplates/rest') : Yii::app()->createUrl('tar/manage/proceduretemplates/rest',array('id'=>$model->id)))."';
     var data = $(this).serialize();
     restConduit('$mode',url,data,
     function(data, textStatus, jqXHR){
       var id = data;
       if(textStatus === 'success'){
         alert('Saved.');
-        window.location = '".Yii::app()->createUrl('tar/manage/tarproceduretemplate/view?id=')."' + id;
+        window.location = '".Yii::app()->createUrl('tar/manage/proceduretemplates/view?id=')."' + id;
       }  
     },
     function(jqXHR, textStatus, errorThrown){
@@ -93,7 +93,7 @@
 			'type'=>'',
       'htmlOptions'=>array(
         'class'=>'btn btn-mini',
-        'href'=>Yii::app()->createUrl('tar/manage/tarproceduretemplate/admin'),
+        'href'=>Yii::app()->createUrl('tar/manage/proceduretemplates/admin'),
       ),
 			'label'=>'Cancel',
 		)); ?>

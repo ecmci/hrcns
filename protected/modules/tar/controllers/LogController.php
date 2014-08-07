@@ -150,12 +150,12 @@ class LogController extends Controller
 	public function actionClose($id)
 	{
     $model = $this->loadModel($id);
-    //$model->is_cron_trigerred = true;
+    $model->is_cron_trigerred = true;
     
     // Uncomment the following line if AJAX validation is needed
 		$this->performAjaxValidation($model);
     
-    if($model->status_id == TarLog::$STATUS_APPROVED){
+    if($model->status_id == TarLog::$STATUS_APPROVED or $model->age_in_days < 22){
       $model->close()->save(false);
       TarActivityTrail::log('Closed','Closed by '.Yii::app()->user->getState('user').'. Reason was: APPROVED',$model->case_id);
       $this->render('close_success',array('model'=>$model));

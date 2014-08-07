@@ -15,7 +15,6 @@
  */
 class TarActivityTrail extends CActiveRecord
 {
-	
   /**
 	 * Override parent after find
 	 */

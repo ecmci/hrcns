@@ -66,13 +66,15 @@ class MessageController extends Controller
         throw new CHttpException('401','Wrong key!');
       }
       
+      
+      
       //return all unseen messages for the users
-      $model = $model=new TarMessaging('search');
-      $model->to_user_id = $u;
+      $model = new TarMessaging('search');
+      $model->to_user_id = $u->idUSER;
       $model->is_seen = '0';
       $data = array();
       $i=0;
-      foreach($model->getMessages()->getData() as $d){
+      foreach($model->search()->getData() as $d){  
         $data[$i]['id'] = $d->id;
         $data[$i]['from'] = $d->sender->f_name.' '.$d->sender->l_name;
         $data[$i]['message'] = trim(preg_replace('/\s\s+/', ' ', strip_tags($d->message)));
